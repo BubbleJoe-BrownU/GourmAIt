@@ -5,6 +5,7 @@ from torchvision.datasets import Food101
 from torchvision import transforms
 from torchvision.models.resnet import resnet50
 
+import math
 import numpy as np
 from tqdm import tqdm
 import os
@@ -12,6 +13,10 @@ import os
 # default config
 out_dir = 'out-resnet50-pretrained-linear-probe'
 dataset_dir = 'datasets'
+
+
+
+
 
 # system
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -23,7 +28,9 @@ ptdtype = {
 }[dtype]
 to_compile = True
 
-batch_size = 48
+os.makedirs(out_dir, exist_ok=True)
+
+batch_size = 96
 torch.manual_seed(42)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn
@@ -31,8 +38,9 @@ torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn
 grad_clip = 1.0
 # learning rate decay settings
 decay_lr = True
-warmup_iters = 5
-lr_decay_epochs = 100
+warmup_iters = 2000 # how many steps to warm up for
+lr_decay_iters = 40_000 
+learning_rate = 1e-3
 min_lr = 1e-5
 
 model = resnet50()
@@ -44,7 +52,7 @@ for pn, p in model.named_parameters():
         p.required_grad = False
 model.to(device)
 
-optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 # initialize a GradScaler. If enabled-False scaler is a no-op
 scaler = torch.cuda.amp.GradScaler(enabled=(dtype=='float16'))
@@ -85,13 +93,33 @@ def get_batch(split, batch_size, device, labeled=True):
         else:
             yield x
 
-
+# learning rate decay scheduler (cosine with warmup)
+def get_lr(it):
+    # 1) linear warmup for warmup_iters steps
+    if it < warmup_iters:
+        return learning_rate * it / warmup_iters
+    # 2) if it > lr_decay_iters, return min learning rate
+    if it > lr_decay_iters:
+        return min_lr
+    # 3) in between, use cosine decay down to min learning rate
+    decay_ratio = (it - warmup_iters) / (lr_decay_iters - warmup_iters)
+    assert 0 <= decay_ratio <= 1
+    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
+    return min_lr + coeff * (learning_rate - min_lr)
+    
+iter_num = 0 # only used to schedule learning rate
 
 for epoch in range(num_epochs):
     losses = []
     # training
     model.train()
     for x, y in tqdm(get_batch('train', batch_size, device)):
+        # get learning rate from lr_scheduler
+        lr = get_lr(iter_num) if decay_lr else learning_rate
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+        iter_num += 1
+        
         # mixed precision training
         with torch.amp.autocast(device_type=device, dtype=ptdtype):
             logits = model(x)
@@ -122,7 +150,7 @@ for epoch in range(num_epochs):
         losses.append(loss.item())
     val_loss = np.round(sum(losses)/len(losses), 3)
     val_acc = np.round(num_correct / 25_250, 4)
-    print(f"             , average validation loss: {val_loss}, accuracy: {val_acc*100}%")
+    print(f"             , average validation loss: {val_loss}, accuracy: {val_acc*100:.4f}%")
     
     if val_loss < best_val_loss:
         best_val_loss = val_loss
@@ -135,5 +163,6 @@ for epoch in range(num_epochs):
                 'val_acc': val_acc
             }
             print(f"validation loss lower than best val loss, saving model checkpoint...")
-            torch.save(checkpoint, os.path.join(out_dir, f"checkpoint-{best_val_loss}.pt"))
+#             torch.save(checkpoint, os.path.join(out_dir, f"checkpoint-{best_val_loss}.pt"))
+            torch.save(checkpoint, os.path.join(out_dir, f"checkpoint.pt"))
             
