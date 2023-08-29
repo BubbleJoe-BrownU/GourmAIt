@@ -45,7 +45,7 @@ lr_decay_iters = 40_000
 learning_rate = 1e-3
 min_lr = 1e-5
 
-model = resnet50()
+model = resnet50(weights= ResNet50_Weights.IMAGENET1K_V2)
 model.fc = nn.Linear(in_features=2048, out_features=101, bias=True)
 # freeze all layers except the prediction headS
 # do some linear probe here
