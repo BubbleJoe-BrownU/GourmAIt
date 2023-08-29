@@ -4,7 +4,8 @@ food-101
 *.sh
 *.err
 *.out
-<<<<<<< HEAD
-=======
 out-*
->>>>>>> 2d91d570dc1ca0f172bc3952da999a9b5495cdc0
+.vscode
+assets
+libtorch
+CMakeLists.txt

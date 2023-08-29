@@ -10,11 +10,13 @@ import numpy as np
 from tqdm import tqdm
 import os
 
+from randaug import RandAugment
+
 # default config
 out_dir = 'out-resnet50-pretrained-linear-probe'
 dataset_dir = 'datasets'
 
-
+rand_aug = True
 
 
 
@@ -73,12 +75,20 @@ preprocess = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
+# random augmentation
+random_augmentation_preprocess = transforms.Compose(
+    [
+        RandAugment(),
+        preprocess
+    ]
+)
+
 
 # dataloader
 def get_batch(split, batch_size, device, labeled=True):
     assert split in {'train', 'test'}
     assert batch_size > 0
-    data = Food101(root=dataset_dir, split='train', transform=preprocess) if split == "train" else Food101(root=dataset_dir, split='test', transform=preprocess)
+    data = Food101(root=dataset_dir, split='train', transform=random_augmentation_preprocess) if split == "train" else Food101(root=dataset_dir, split='test', transform=preprocess)
 
     data_len = len(data)
     indices = torch.randperm(data_len)
