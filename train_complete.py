@@ -78,10 +78,12 @@ elif init_from == 'from_pretrained':
     print("warm start from pretrained checkpoint of resnet 50")
     model = resnet50(weights= ResNet50_Weights.IMAGENET1K_V2)
     model.fc = nn.Linear(in_features=2048, out_features=101, bias=True)
-    # freeze all layers
+    # freeze all layers except the prediction head
+    # cannot freeze all here, otherwise no grad is needed and backward would error out
     if stepwise_unfreeze:
-        for p in model.parameters():
-            p.requires_grad = False
+        for pn, p in model.named_parameters():
+            if not pn.startswith('fc'):
+                p.required_grad = False
             
 elif init_from == 'resume':
     print(f"resuming training from {out_dir}")
