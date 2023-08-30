@@ -62,9 +62,11 @@ def main():
 #             train_directly(model)
             # would take several hours even days to converge on cheap GPUs
             # laoding checkpointed state dict recommended
-        
-            model.load_state_dict()
+            checkpoint_path = 'out-'
+            model.load_state_dict(torch.load(checkpoint_path, map_location=device)['model'])
         elif i > 0:
+            dataloader = get_batch_with_pseudo_label(batch_size, models[i-1], device)
+            for i
             
     
     
