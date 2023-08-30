@@ -33,7 +33,7 @@ to_compile = True
 
 os.makedirs(out_dir, exist_ok=True)
 
-batch_size = 96
+batch_size = 128
 torch.manual_seed(42)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn
@@ -74,7 +74,7 @@ if init_from == 'scratch':
     stepwise_unfreeze = False
     model = resnet18(num_classes=101)
 elif init_from == 'from_pretrained':
-    print("warm start from pretrained checkpoint of resnet 50")
+    print("warm start from pretrained checkpoint")
     model = resnet18(weights= ResNet18_Weights.IMAGENET1K_V1)
     model.fc = nn.Linear(in_features=512, out_features=101, bias=True)
     # freeze all layers except the prediction head

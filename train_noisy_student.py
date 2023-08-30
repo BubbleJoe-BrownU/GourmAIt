@@ -22,6 +22,8 @@ def prepare_models():
     model4.fc = nn.Linear(in_features=204, out_features=101, bias=True)
     
     models = [model1, model2, model3, model4]
+    batch_size_list = []
+    return 
     
 def get_batch_with_pseudo_label(batch_size, teacher, device, label_model='soft'):
     data = Food101(root=dataset_dir, split='train')
