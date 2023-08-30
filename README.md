@@ -13,11 +13,9 @@ In this project, we will use the same training logic to train a light-wieght Con
 
 We decided to train a series of resnet18, resnet34, resnet50, resnet50 under the Noisy Student Training framework, where the third model (resnet50) is used to train a same-sized student model (resnet50) for one iteration. Following the orignial paper's practice, we applied RandAugment and Stochastic Depth to student models to increase their robustness. We didn't apply Dropout to our models because Dropout loses effectiveness when combined with BatchNorms in resnet.
 
-## Progress
-| Step | Implemented |
-| ---- | ----------- |
-| Training resnet18 directly | done |
-| Training resnet34 as student | not yet |
-| Training resnet50 as student | not yet |
-| Training resnet50 as student | not yet |
+## Features
+- Mixed Precision Training
+- AdamW with cosine-decaying learning rate
+- Noisy Student Training
+- Stochastic Depth
 
