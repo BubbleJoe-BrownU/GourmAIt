@@ -17,6 +17,9 @@ def conv1x1(in_planes: int,
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 class BasicBlock(nn.Module):
+    """
+    Basic Resnet Block is made of [Conv, BN, ReLU, Conv, BN]
+    """
     expansion: int = 1
         
     def __init__(self, 

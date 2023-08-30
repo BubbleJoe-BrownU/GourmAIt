@@ -1,14 +1,13 @@
+import math
+import numpy as np
+from tqdm import tqdm
+import os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.datasets import Food101
 from torchvision import transforms
-from torchvision.models.resnet import resnet50, ResNet50_Weights
-
-import math
-import numpy as np
-from tqdm import tqdm
-import os
+from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 
 from randaug import RandAugment
 
@@ -52,13 +51,13 @@ epoch_num = 0
 best_val_loss = float('inf')
 
 # gradually unfreeze early layers as training proceeds
-def unfreeze_model_stepwise(model, epoch_num):
-    if epoch_num // 10 == 0:
+def unfreeze_model_stepwise(model, epoch_num, interval=10):
+    if epoch_num // interval == 0:
         for pn, p in model.named_parameters():
             if pn.startswith('fc'):
                 p.requires_grad = True
     else:
-        layer_to_unfreeze = epoch_num // 10
+        layer_to_unfreeze = epoch_num // interval
         if layer_to_unfreeze > 5:
             return
 #         if 0 < layer_to_unfreeze and layer_to_unfreeze <= 4:
@@ -73,11 +72,11 @@ if init_from == 'scratch':
     print("training from scratch")
     # no need to freeze layers if training from scratch
     stepwise_unfreeze = False
-    model = resnet50(num_classes=101)
+    model = resnet18(num_classes=101)
 elif init_from == 'from_pretrained':
     print("warm start from pretrained checkpoint of resnet 50")
-    model = resnet50(weights= ResNet50_Weights.IMAGENET1K_V2)
-    model.fc = nn.Linear(in_features=2048, out_features=101, bias=True)
+    model = resnet18(weights= ResNet18_Weights.IMAGENET1K_V1)
+    model.fc = nn.Linear(in_features=512, out_features=101, bias=True)
     # freeze all layers except the prediction head
     # cannot freeze all here, otherwise no grad is needed and backward would error out
     if stepwise_unfreeze:
@@ -87,6 +86,7 @@ elif init_from == 'from_pretrained':
             
 elif init_from == 'resume':
     print(f"resuming training from {out_dir}")
+    model = resnet18(num_classes=101)
     ckpt_path = os.path.join(out_dir, 'checkpoint.pt')
     checkpoint = torch.load(ckpt_path, map_location=device)
     state_dict = checkpoint['model']
