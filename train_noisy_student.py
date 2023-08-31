@@ -10,15 +10,14 @@ from torchvision import transforms
 from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 
 from randaug import RandAugment
-
+from train_utils import get_lr, get_batch, prepare_model, train
 # configs
-out_dir = 'out-resnet50-pretrained-stepwise-unfreeze'
+
 dataset_dir = 'datasets'
 
-rand_aug = True
 stepwise_unfreeze = True
 init_from = 'from_pretrained'
-
+weight_decay = 1e-1
 
 
 # system
@@ -30,8 +29,6 @@ ptdtype = {
     'float16': torch.float16
 }[dtype]
 to_compile = True
-
-os.makedirs(out_dir, exist_ok=True)
 
 batch_size = 128
 torch.manual_seed(42)
@@ -50,52 +47,26 @@ max_epochs = 100
 epoch_num = 0
 best_val_loss = float('inf')
 
+
+
 def prepare_training():
-    model1 = resnet18(weights=ResNet18_Weights.IMAGENET1K_V1)
-    model1.fc = nn.Linear(in_features=512, out_features=101, bias=True)
-    model2 = resnet34(weights=ResNet34_Weights.IMAGENET1K_V2)
-    model2.fc = nn.Linear(in_features=1024, out_features=101, bias=True)
-    model3 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
-    model3.fc = nn.Linear(in_features=2048, out_features=101, bias=True)
-    model4 = resnet50(weights=ResNet50_Weights.IMAGENET1K_V2)
-    model4.fc = nn.Linear(in_features=204, out_features=101, bias=True)
+    """
+    prepare a series of models for the Noisy Student Training
+    """
+    model1, optimizer1, epoch_num1, eval_loss1, stepwise_unfreeze1 = prepare_model('resnet18', init_from='from_pretrained', stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model1')
+    model2, optimizer2, epoch_num2, eval_loss2, stepwise_unfreeze2 = prepare_model('resnet34', init_from='from_pretrained', stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model2')
+    model3, optimizer3, epoch_num3, eval_loss3, stepwise_unfreeze3 = prepare_model('resnet50', init_from='from_pretrained', stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model3')
+    model4, optimizer4, epoch_num4, eval_loss4, stepwise_unfreeze4 = prepare_model('resnet50', init_from='from_pretrained', stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model4')
     
     models = [model1, model2, model3, model4]
-    batch_size_list = [128, 128, 96, 64]
-    epoch_list = [100, 50, 50, 50]
-    return models, batch_size_list, epoch_list
+    optimizer_list = [optimizer1, optimizer2, optimizer3, optimizer4]
+    epoch_num_list = [epoch_num1, epoch_num2, epoch_num3, epoch_num4]
+    eval_loss_list = [eval_loss1, eval_loss2, eval_loss3, eval_loss4]
+    stepwise_unfreeze_list = [stepwise_unfreeze1, stepwise_unfreeze2, stepwise_unfreeze3, stepwise_unfreeze4]
 
-# preprocess the input
-preprocess = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-# random augmentation
-random_augmentation_preprocess = transforms.Compose(
-    [
-        RandAugment(),
-        preprocess
-    ]
-)
+    return models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list
 
-def get_batch_with_pseudo_label(batch_size, teacher, device, label_model='soft'):
-    data = Food101(root=dataset_dir, split='train')
-    
-    data_len = len(data)
-    indices = torch.randperm(data_len)
-    
-    teacher.to(device)
-    teacher.eval()
-    
-    for i in range(0, data_len, batch_size):
-        end = min(data_len, i+batch_size)
-        x = torch.stack([random_augmentation_preprocess(data[idx][0]) for idx in indices[i:end]]).to(device)
-        with torch.no_grad():
-            y = teacher(torch.stack([preprocess(data[idx][0]) for idx in indices[i:end]]).to(device))
-        y = F.softmax(y, dim=-1) if label_model == 'soft' else torch.argmax(y, dim=-1)
-        yield x, y
+
 
 def main():
     """
@@ -109,20 +80,63 @@ def main():
     (4)
     We use the student as the new teacher model and continue to step 2.
     """
-    
-    models, batch_size_list, epoch_list = prepare_training()
+    out_dir_list = [f"noisy-student-model{i}" for i in range(1, 5)]
+    for out_dir in out_dir_list:
+        os.makedirs(out_dir, exist_ok=True)
+    batch_size_list = [256, 128, 128, 128]
+    epoch_list = [100, 50, 50, 50]
+    models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list = prepare_training()
     
     for i, model in enumerate(models):
+        model = models[i]
+        out_dir = out_dir_list[i]
+        optimizer = optimizer_list[i]
+        batch_size = batch_size_list[i]
+        max_epochs = epoch_list[i]
+        epoch_num = epoch_num_list[i]
+        best_val_loss = eval_loss_list[i]
+        stepwise_unfreeze = stepwise_unfreeze_list[i]
         if i == 0:
-#             train_directly(model)
-            # would take several hours even days to converge on cheap GPUs
-            # laoding checkpointed state dict recommended
-            checkpoint_path = 'out-'
-            model.load_state_dict(torch.load(checkpoint_path, map_location=device)['model'])
+            train(model=model, 
+                optimizer=optimizer, 
+                epoch_num=epoch_num, 
+                best_val_loss=best_val_loss, 
+                stepwise_unfreeze=stepwise_unfreeze, 
+                max_epochs=max_epochs, 
+                warmup_iters=warmup_iters, 
+                lr_decay_iters=lr_decay_iters, 
+                decay_lr=decay_lr, 
+                learning_rate=learning_rate, 
+                min_lr=min_lr, 
+                out_dir=out_dir, 
+                batch_size=batch_size, 
+                device=device)
+            
         elif i > 0:
-            batch_size = batch_size_list[i]
-            max_epochs = epoch_list[i]
-            dataloader = get_batch_with_pseudo_label(batch_size, models[i-1], device)
+            train(model=model, 
+                optimizer=optimizer, 
+                epoch_num=epoch_num, 
+                best_val_loss=best_val_loss, 
+                stepwise_unfreeze=stepwise_unfreeze, 
+                max_epochs=max_epochs, 
+                warmup_iters=warmup_iters, 
+                lr_decay_iters=lr_decay_iters, 
+                decay_lr=decay_lr, 
+                learning_rate=learning_rate, 
+                min_lr=min_lr, 
+                out_dir=out_dir, 
+                batch_size=batch_size, 
+                device=device, 
+                teacher=models[i-1], 
+                pseudo_label='soft')
+            
+if __name__ == '__main__':
+    main()
+            
+
+            
+            
+
             
             
     

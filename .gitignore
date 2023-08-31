@@ -9,3 +9,4 @@ out-*
 assets
 libtorch
 CMakeLists.txt
+*.pt

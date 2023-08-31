@@ -1,3 +1,7 @@
+# This file is from torchvision
+# simply for self-learning purpose
+# Just feel free to use torchvison's module
+
 import torch
 import torch.nn as nn
 import math
@@ -8,7 +12,6 @@ from typing import Optional, List, Tuple, Dict
 
 def _apply_op(img: Tensor, op_name: str, magnitude: float, interpolation: InterpolationMode, fill: Optional[List[float]]):
     """
-    magnitude should be arctan (magnitude)
     """
     if op_name == "ShearX":
         img = TVF.affine(img,
