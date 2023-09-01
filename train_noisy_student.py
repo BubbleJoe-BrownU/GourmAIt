@@ -14,7 +14,7 @@ from train_utils import get_lr, get_batch, prepare_model, train
 # configs
 
 dataset_dir = 'datasets'
-
+wandb_log = True
 stepwise_unfreeze = True
 init_from = 'from_pretrained'
 weight_decay = 1e-1
@@ -80,6 +80,8 @@ def main():
     (4)
     We use the student as the new teacher model and continue to step 2.
     """
+
+
     out_dir_list = [f"noisy-student-model{i}" for i in range(1, 5)]
     for out_dir in out_dir_list:
         os.makedirs(out_dir, exist_ok=True)

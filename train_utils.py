@@ -15,7 +15,7 @@ from randaug import RandAugment
 dataset_dir='datasets'
 wandb_log = True
 wandb_project = 'noisy-student'
-wandb_run_name = 'debug'
+
 
 def unfreeze_model_stepwise(model, epoch_num, interval=10):
     """
@@ -228,6 +228,10 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
     Second group: max_epochs, warmup_iters, lr_decay_iters, decay_lr, learning_rate, min_lr, are used to regulate training progress and manipulatie learning rate
     Third group: batch_size, device, teacher=None, pseudo_label, are used to load data with regard to our training framwork
     """
+
+    if wandb_log:
+        wandb_name = out_dir.split('-')[-1]
+        wandb.init(project=wandb_project, name=wandb_name)
     dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16'
     ptdtype = {
     'float32': torch.float32,
@@ -250,17 +254,12 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
 
         # training
         losses = []
-        num_correct = 0
-        total_pred = 101*750
         model.train()
         for x, y in tqdm(get_batch('train', batch_size, device, dataset_dir, teacher, pseudo_label)):
             # mixed precision training
             with torch.amp.autocast(device_type=device, dtype=ptdtype):
                 logits = model(x)
                 loss = F.cross_entropy(logits, y)
-            with torch.no_grad():
-                prediction = torch.argmax(logits, dim=-1)
-                num_correct += (prediction == y).sum().item()
             losses.append(loss.item())
             scaler.scale(loss).backward()
             # clip the gradient
@@ -274,7 +273,7 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
             optimizer.zero_grad(set_to_none=True)
         train_loss = np.round(sum(losses)/len(losses), 3)
         train_acc = np.round(num_correct*100 / total_pred, 2)
-        print(f"epoch {epoch_num}, average training loss: {train_loss}, accuracy: {train_acc}%")
+        print(f"epoch {epoch_num}, average training loss: {train_loss}")
         
         # evaluating
         model.eval()
@@ -298,7 +297,6 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                 {
                     'epoch': epoch_num,
                     'train/loss': train_loss,
-                    'train/acc': train_acc,
                     'val/loss': val_loss,
                     'val/acc': val_acc,
                     'lr': lr
