@@ -11,7 +11,7 @@ from torchvision.datasets import Food101
 from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 import wandb
 from randaug import RandAugment
-
+dataset_dir = '../Food101'
 wandb_log = True
 wandb_project = 'noisy-student'
 wandb_name = 'teacher-model-is-best-model'

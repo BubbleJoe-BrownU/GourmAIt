@@ -13,7 +13,6 @@ from randaug import RandAugment
 from train_utils import get_lr, get_batch, prepare_model, train, load_model
 # configs
 
-dataset_dir = '../Food101'
 wandb_log = True
 stepwise_unfreeze = True
 init_from = 'from_pretrained'
