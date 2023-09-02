@@ -13,7 +13,7 @@ import wandb
 from randaug import RandAugment
 
 dataset_dir='datasets'
-wandb_log = True
+wandb_log = False
 wandb_project = 'noisy-student'
 
 
@@ -117,8 +117,8 @@ def get_batch(split, batch_size, device, dataset_dir, model=None, pseudo_label=N
         data = Food101(root=dataset_dir, split='train', transform=random_augmentation_preprocess) if split == "train" else Food101(root=dataset_dir, split='test', transform=preprocess)
         data_len = len(data)
         indices = torch.randperm(data_len)
-        # for i in range(0, data_len, batch_size):
-        for i in range(0, 2*batch_size, batch_size):
+        for i in range(0, data_len, batch_size):
+        # for i in range(0, 2*batch_size, batch_size):
             end = min(data_len, i+batch_size)
             inputs = torch.stack([data[idx][0] for idx in indices[i:end]]).to(device)
             targets = torch.Tensor([data[idx][1] for idx in indices[i:end]]).to(torch.long).to(device)
@@ -133,8 +133,8 @@ def get_batch(split, batch_size, device, dataset_dir, model=None, pseudo_label=N
         
         model.to(device)
         model.eval()
-        # for i in range(0, data_len, batch_size):
-        for i in range(0, 2*batch_size, batch_size):
+        for i in range(0, data_len, batch_size):
+        # for i in range(0, 2*batch_size, batch_size):
             end = min(data_len, i+batch_size)
             inputs = torch.stack([random_augmentation_preprocess(data[idx][0]) for idx in indices[i:end]]).to(device)
             with torch.no_grad():
@@ -142,7 +142,34 @@ def get_batch(split, batch_size, device, dataset_dir, model=None, pseudo_label=N
             targets = F.softmax(targets, dim=-1) if pseudo_label == 'soft' else torch.argmax(targets, dim=-1)
             yield inputs, targets
 
+def load_model(model_name, device, to_compile, out_dir):
+    """
+    Load a model from a directory. User should ensure the model type is compatible with the checkpoint saved in out_dir
+    """
+    model_name = model_name.lower()
+    assert model_name in {'resnet18', 'resnet34', 'resnet50'}
 
+    model_class, out_channels = {
+            'resnet18': [resnet18, 512],
+            'resnet34': [resnet34, 512],
+            'resnet50': [resnet50, 2048]
+    }[model_name]
+
+    model = model_class(num_classes=101)
+    model.to(device)
+    checkpoint = torch.load(os.path.join(out_dir, 'checkpoint.pt'), map_location=device)
+    state_dict = checkpoint['model']
+    unwanted_prefix = '_orig_mod.'
+    for k in list(state_dict.keys()):
+        if k.startswith(unwanted_prefix):
+            state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
+                
+    model.load_state_dict(state_dict)
+
+    if to_compile:
+        model = torch.compile(model)
+
+    return model
 
 def prepare_model(model_name, init_from, stepwise_unfreeze, device, to_compile, weight_decay, learning_rate, out_dir):
     """
@@ -272,7 +299,6 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
     #         optimizer.step()
             optimizer.zero_grad(set_to_none=True)
         train_loss = np.round(sum(losses)/len(losses), 3)
-        train_acc = np.round(num_correct*100 / total_pred, 2)
         print(f"epoch {epoch_num}, average training loss: {train_loss}")
         
         # evaluating

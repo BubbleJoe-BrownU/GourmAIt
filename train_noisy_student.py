@@ -10,7 +10,7 @@ from torchvision import transforms
 from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 
 from randaug import RandAugment
-from train_utils import get_lr, get_batch, prepare_model, train
+from train_utils import get_lr, get_batch, prepare_model, train, load_model
 # configs
 
 dataset_dir = 'datasets'
@@ -81,12 +81,12 @@ def main():
     We use the student as the new teacher model and continue to step 2.
     """
 
-
+    model_name_list = ['resnet18', 'resnet34', 'resnet50', 'resnet50']
     out_dir_list = [f"noisy-student-model{i}" for i in range(1, 5)]
     for out_dir in out_dir_list:
         os.makedirs(out_dir, exist_ok=True)
-    batch_size_list = [256, 128, 128, 128]
-    epoch_list = [100, 50, 50, 50]
+    batch_size_list = [384, 384, 384, 384]
+    epoch_list = [30, 30, 30, 30]
     models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list = prepare_training()
     
     for i, model in enumerate(models):
@@ -113,7 +113,7 @@ def main():
                 out_dir=out_dir, 
                 batch_size=batch_size, 
                 device=device)
-            
+            models[i] = load_model(model_name_list[i], device, to_compile, out_dir)            
         elif i > 0:
             train(model=model, 
                 optimizer=optimizer, 
@@ -131,6 +131,8 @@ def main():
                 device=device, 
                 teacher=models[i-1], 
                 pseudo_label='soft')
+
+            models[i] = load_model(model_name_list[i], device, to_compile, out_dir)            
             
 if __name__ == '__main__':
     main()
