@@ -12,9 +12,9 @@ from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Wei
 import wandb
 from randaug import RandAugment
 
-dataset_dir='datasets'
-wandb_log = False
+wandb_log = True
 wandb_project = 'noisy-student'
+wandb_name = 'teacher-model-is-best-model'
 
 
 def unfreeze_model_stepwise(model, epoch_num, interval=10):
@@ -257,7 +257,6 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
     """
 
     if wandb_log:
-        wandb_name = out_dir.split('-')[-1]
         wandb.init(project=wandb_project, name=wandb_name)
     dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16'
     ptdtype = {
