@@ -8,12 +8,15 @@ import torch.nn.functional as F
 from torchvision.datasets import Food101
 from torchvision import transforms
 from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
-
+import wandb
 from randaug import RandAugment
 from train_utils import get_lr, get_batch, prepare_model, train, load_model
 # configs
 
 wandb_log = True
+wandb_project = 'noisy-student'
+wandb_name = 'teacher-model-is-best-model'
+
 stepwise_unfreeze = True
 init_from = 'from_pretrained'
 weight_decay = 1e-1
@@ -79,7 +82,9 @@ def main():
     (4)
     We use the student as the new teacher model and continue to step 2.
     """
-
+    if wandb_log:
+        wandb.init(project=wandb_project, name=wandb_name)
+    
     model_name_list = ['resnet18', 'resnet34', 'resnet50', 'resnet50']
     out_dir_list = [f"noisy-student-model{i}" for i in range(1, 5)]
     for out_dir in out_dir_list:
@@ -111,7 +116,8 @@ def main():
                 min_lr=min_lr, 
                 out_dir=out_dir, 
                 batch_size=batch_size, 
-                device=device)
+                device=device, 
+                wandb_log=wandb_log)
             models[i] = load_model(model_name_list[i], device, to_compile, out_dir)            
         elif i > 0:
             train(model=model, 
@@ -128,6 +134,7 @@ def main():
                 out_dir=out_dir, 
                 batch_size=batch_size, 
                 device=device, 
+                wandb_log = wandb_log, 
                 teacher=models[i-1], 
                 pseudo_label='soft')
 

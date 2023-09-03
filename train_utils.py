@@ -11,10 +11,10 @@ from torchvision.datasets import Food101
 from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 import wandb
 from randaug import RandAugment
-dataset_dir = '../Food101'
-wandb_log = True
-wandb_project = 'noisy-student'
-wandb_name = 'teacher-model-is-best-model'
+
+dataset_dir = 'datasets'
+# dataset_dir = '../Food101'
+
 
 
 def unfreeze_model_stepwise(model, epoch_num, interval=10):
@@ -246,7 +246,7 @@ def prepare_model(model_name, init_from, stepwise_unfreeze, device, to_compile, 
 
 
 
-def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epochs, warmup_iters, lr_decay_iters, decay_lr, learning_rate, min_lr, out_dir, batch_size, device, teacher=None, pseudo_label=None):
+def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epochs, warmup_iters, lr_decay_iters, decay_lr, learning_rate, min_lr, out_dir, batch_size, device, wandb_log, teacher=None, pseudo_label=None):
     """
     I know the number of parameters passed here are outrageously enormous, but I have little to do with it.
     Sometimes to wrap everything just to make the program looks good, one has to sacrifice something else.
@@ -256,8 +256,7 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
     Third group: batch_size, device, teacher=None, pseudo_label, are used to load data with regard to our training framwork
     """
 
-    if wandb_log:
-        wandb.init(project=wandb_project, name=wandb_name)
+    
     dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16'
     ptdtype = {
     'float32': torch.float32,
