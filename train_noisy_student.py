@@ -42,7 +42,7 @@ grad_clip = 1.0
 decay_lr = True
 warmup_iters = 5 # how many steps to warm up for
 lr_decay_iters = 50
-learning_rate = 1e-3
+learning_rate = 5e-4
 min_lr = 1e-5
 
 max_epochs = 100

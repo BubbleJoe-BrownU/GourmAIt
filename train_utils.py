@@ -273,7 +273,8 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
             unfreeze_model_stepwise(model, epoch_num)
         
         # apply learning rate scheduler
-        lr = get_lr(epoch_num, learning_rate, min_lr, warmup_iters, lr_decay_iters) if decay_lr else learning_rate
+        # pass the epoch_num + 1, s.t. epoch_num ranges from 1 to max_epochs
+        lr = get_lr(epoch_num+1, learning_rate, min_lr, warmup_iters, lr_decay_iters) if decay_lr else learning_rate
         for param_group in optimizer.param_groups:
             param_group['lr'] = lr
 
@@ -343,5 +344,5 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
 
         epoch_num += 1
         
-        if epoch_num > max_epochs:
+        if epoch_num >= max_epochs:
             break
