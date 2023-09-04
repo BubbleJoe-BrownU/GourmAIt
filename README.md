@@ -7,15 +7,44 @@ Noisy Student is a self-supervised training technique released by google researc
   3. Train a larger student classifier on the combination of labeled dataset and unlabeled dataset, adding noise to the student model
   4. Go to step 2, using student as the teacher
 
-For more details please refer to [google research's repo] (https://github.com/google-research/noisystudent) and the [Noisy Student] (https://arxiv.org/abs/1911.04252) article.
+For more details please refer to [google research's repo](https://github.com/google-research/noisystudent) and the [Noisy Student](https://arxiv.org/abs/1911.04252) article.
 
 In this project, we will use the same training logic to train a light-wieght Convolutional Neural Network (ResNet) on the Food101 dataset. After training and evaluating the model, we will then deploy it on a compute-insufficient device (an android phone).
 
-We decided to train a series of resnet18, resnet34, resnet50, resnet50 under the Noisy Student Training framework, where the third model (resnet50) is used to train a same-sized student model (resnet50) for one iteration. Following the orignial paper's practice, we applied RandAugment and Stochastic Depth to student models to increase their robustness. We didn't apply Dropout to our models because Dropout loses effectiveness when combined with BatchNorms in resnet.
+We decided to train a series of resnet18, resnet34, resnet50, resnet50, which we refer to as model1, model2, model3, and model4, respectively, under the Noisy Student Training framework. The first three models are of increasing model sizes, while model3 and model4 are of same model size, both resnet50. This is one major feature of Noisy Student Training that makes it distinctive from knowledge distillation, where the teacher model is of greater capacity than the student model. Following the orignial paper's practice, we applied RandAugment and Stochastic Depth to student models to increase their robustness. We didn't apply Dropout to our models because Dropout loses effectiveness when combined with BatchNorms in resnet.
 
 ## Features
 - Mixed Precision Training
 - AdamW with cosine-decaying learning rate
 - Noisy Student Training
-- Stochastic Depth
+- Soft and Hard Pseudo Labels
+
+## Requirements
+- Python <= 3.10 (Python > 3.10 is not yet compatible with PyTorch2.0's compile feature)
+- PyTorch >= 2.0
+- Torchvision
+
+## Usage
+To train a model directly on food101 dataset:
+```python
+python train_directly.py \
+--dataset_dir datasets \
+--out_dir out-train-directly \
+--lr_decay \
+--learning_rate 1e-3 \
+--min_lr 1e-5 \
+--init_from scratch
+```
+
+To train a model using Noisy Student Training:
+```python
+python train_nosiy_student.py \
+--dataset_dir datasets \
+--out_dir out-noisy-student \
+--lr_decay \
+--learning_rate 1e-3 \
+--min_lr 1e-5 \
+--init_from from_pretrained
+```
+
 
