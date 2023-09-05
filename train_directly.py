@@ -1,23 +1,25 @@
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torchvision.datasets import Food101
-from torchvision import transforms
-from torchvision.models.resnet import resnet50
-
 import math
 import numpy as np
 from tqdm import tqdm
 import os
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import argparse
+import wandb
+from train_utils import prepare_model, train
 
-from randaug import RandAugment
+wandb_log = True
+wandb_project = 'noisy-student'
+wandb_name = 'train-resnet50-directly'
 
 # default config
-out_dir = 'out-resnet50-pretrained-linear-probe'
+out_dir = 'train-resnet50-directly-for-120-epochs'
 dataset_dir = 'datasets'
-
-rand_aug = True
-
+model_name = 'resnet50'
+stepwise_unfreeze = True
+init_from = 'from_pretrained'
+weight_decay = 1e-1
 
 
 # system
@@ -30,9 +32,7 @@ ptdtype = {
 }[dtype]
 to_compile = True
 
-os.makedirs(out_dir, exist_ok=True)
-
-batch_size = 96
+batch_size = 128
 torch.manual_seed(42)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn
@@ -40,139 +40,61 @@ torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn
 grad_clip = 1.0
 # learning rate decay settings
 decay_lr = True
-warmup_iters = 2000 # how many steps to warm up for
-lr_decay_iters = 40_000 
+warmup_iters = 5 # how many steps to warm up for
+lr_decay_iters = 150
 learning_rate = 1e-3
 min_lr = 1e-5
 
-model = resnet50(weights= ResNet50_Weights.IMAGENET1K_V2)
-model.fc = nn.Linear(in_features=2048, out_features=101, bias=True)
-# freeze all layers except the prediction headS
-# do some linear probe here
-for pn, p in model.named_parameters():
-    if not pn.startswith('fc'):
-        p.required_grad = False
-model.to(device)
-
-optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
-
-# initialize a GradScaler. If enabled-False scaler is a no-op
-scaler = torch.cuda.amp.GradScaler(enabled=(dtype=='float16'))
-
-
-if to_compile:
-    print("compiling the model ... (will take a few minutes)")
-    unoptimized_model = model
-    model = torch.compile(model)
-
-num_epochs = 100
+max_epochs = 150
+epoch_num = 0
 best_val_loss = float('inf')
 
-# preprocess the input
-preprocess = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-])
-# random augmentation
-random_augmentation_preprocess = transforms.Compose(
-    [
-        RandAugment(),
-        preprocess
-    ]
-)
-
-
-# dataloader
-def get_batch(split, batch_size, device, labeled=True):
-    assert split in {'train', 'test'}
-    assert batch_size > 0
-    data = Food101(root=dataset_dir, split='train', transform=random_augmentation_preprocess) if split == "train" else Food101(root=dataset_dir, split='test', transform=preprocess)
-
-    data_len = len(data)
-    indices = torch.randperm(data_len)
-
-
-    for i in range(0, data_len, batch_size):
-        end = min(data_len, i+batch_size)
-        x = torch.stack([data[idx][0] for idx in indices[i:end]]).to(device)
-        if labeled:
-            y = torch.Tensor([data[idx][1] for idx in indices[i:end]]).to(torch.long).to(device)
-            yield x, y
-        else:
-            yield x
-
-# learning rate decay scheduler (cosine with warmup)
-def get_lr(it):
-    # 1) linear warmup for warmup_iters steps
-    if it < warmup_iters:
-        return learning_rate * it / warmup_iters
-    # 2) if it > lr_decay_iters, return min learning rate
-    if it > lr_decay_iters:
-        return min_lr
-    # 3) in between, use cosine decay down to min learning rate
-    decay_ratio = (it - warmup_iters) / (lr_decay_iters - warmup_iters)
-    assert 0 <= decay_ratio <= 1
-    coeff = 0.5 * (1.0 + math.cos(math.pi * decay_ratio))
-    return min_lr + coeff * (learning_rate - min_lr)
-    
-iter_num = 0 # only used to schedule learning rate
-
-for epoch in range(num_epochs):
-    losses = []
-    # training
-    model.train()
-    for x, y in tqdm(get_batch('train', batch_size, device)):
-        # get learning rate from lr_scheduler
-        lr = get_lr(iter_num) if decay_lr else learning_rate
-        for param_group in optimizer.param_groups:
-            param_group['lr'] = lr
-        iter_num += 1
-        
-        # mixed precision training
-        with torch.amp.autocast(device_type=device, dtype=ptdtype):
-            logits = model(x)
-            loss = F.cross_entropy(logits, y)
-        losses.append(loss.item())
-        scaler.scale(loss).backward()
-        # clip the gradient
-        if grad_clip != 0.0:
-            scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(model.parameters(), grad_clip)
-        scaler.step(optimizer)
-        scaler.update()
-#         loss.backward()
-#         optimizer.step()
-        optimizer.zero_grad(set_to_none=True)
-    print(f"epoch {epoch}, average training loss: {sum(losses)/len(losses):.4f}")
-    
-    # evaluating
-    model.eval()
-    losses = []
-    num_correct = 0
-    for x, y in tqdm(get_batch('test', batch_size, device)):
-        with torch.no_grad():
-            logits = model(x)
-            loss = F.cross_entropy(logits, y)
-            prediction = torch.argmax(logits, dim=-1)
-            num_correct += (prediction == y).sum().item()
-        losses.append(loss.item())
-    val_loss = np.round(sum(losses)/len(losses), 3)
-    val_acc = np.round(num_correct / 25_250, 4)
-    print(f"             , average validation loss: {val_loss}, accuracy: {val_acc*100:.4f}%")
-    
-    if val_loss < best_val_loss:
-        best_val_loss = val_loss
-        if epoch > 0:
-            checkpoint = {
-                'model': model.state_dict(),
-                'optimizer': optimizer.state_dict(),
-                'epoch': epoch,
-                'best_val_loss': best_val_loss,
-                'val_acc': val_acc
-            }
-            print(f"validation loss lower than best val loss, saving model checkpoint...")
-#             torch.save(checkpoint, os.path.join(out_dir, f"checkpoint-{best_val_loss}.pt"))
-            torch.save(checkpoint, os.path.join(out_dir, f"checkpoint.pt"))
             
+def main():
+    # to overwrite some default settings
+    # add more as you would like
+    parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default arguments')
+    parser.add_argument('--model-name', default='resnet50')
+    parser.add_argument('--init-from', default='from_pretrained')
+    parser.add_argument('-o', '--out-dir', default='train-resnet50-directly-for-150-epochs')
+    parser.add_argument('-l', '--learning-rate', default=1e-3)
+    args = parser.parse_args()
+
+    # overwrite some arguments
+    model_name = args.model_name
+    init_from = args.init_from
+    out_dir = args.out_dir
+    learning_rate = args.learning_rate
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    if wandb_log:
+        wandb.init(project=wandb_project, name=wandb_name)
+
+    model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze = prepare_model(model_name=model_name, 
+                                                                                  init_from=init_from, 
+                                                                                  stepwise_unfreeze=True, 
+                                                                                  device=device, 
+                                                                                  to_compile=to_compile, 
+                                                                                  weight_decay=weight_decay, 
+                                                                                  learning_rate=learning_rate, 
+                                                                                  out_dir=out_dir)
+
+    train(model=model, 
+          optimizer=optimizer, 
+          epoch_num=epoch_num, 
+          best_val_loss=best_val_loss, 
+          stepwise_unfreeze=stepwise_unfreeze, 
+          max_epochs=max_epochs, 
+          warmup_iters=warmup_iters, 
+          lr_decay_iters=lr_decay_iters, 
+          decay_lr=decay_lr, 
+          learning_rate=learning_rate, 
+          min_lr=min_lr, 
+          out_dir=out_dir, 
+          batch_size=batch_size, 
+          device=device, 
+          wandb_log=wandb_log)
+
+if __name__ == "__main__":
+    main()

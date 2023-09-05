@@ -1,4 +1,4 @@
-import math
+import argparse
 import numpy as np
 from tqdm import tqdm
 import os
@@ -42,7 +42,7 @@ grad_clip = 1.0
 decay_lr = True
 warmup_iters = 5 # how many steps to warm up for
 lr_decay_iters = 50
-learning_rate = 5e-4
+learning_rate = 1e-3
 min_lr = 1e-5
 
 max_epochs = 100
@@ -82,6 +82,14 @@ def main():
     (4)
     We use the student as the new teacher model and continue to step 2.
     """
+    parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default arguments')
+    parser.add_argument('--init-from', default='from_pretrained')
+    parser.add_argument('-l', '--learning-rate', default=1e-3)
+    args = parser.parse_args()
+
+    init_from = args.init_from
+    learning_rate = args.learning_rate
+
     if wandb_log:
         wandb.init(project=wandb_project, name=wandb_name)
     
