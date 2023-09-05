@@ -1,16 +1,9 @@
 import argparse
-import numpy as np
-from tqdm import tqdm
 import os
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-from torchvision.datasets import Food101
-from torchvision import transforms
-from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 import wandb
-from randaug import RandAugment
-from train_utils import get_lr, get_batch, prepare_model, train, load_model
+from train_utils import prepare_model, train, load_model
 # configs
 
 wandb_log = True
