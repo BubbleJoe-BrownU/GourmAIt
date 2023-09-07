@@ -60,17 +60,33 @@ python train_nosiy_student.py \
 --lr_decay \
 --learning_rate 1e-3 \
 --min_lr 1e-5 \
---init_from from_pretrained
+--init_from from_pretrained \
+--pseudo-label soft
 ```
+
+The choices of customizable hyperparameters are much more abundant than as shown above. Feel free to modify global variables inside script or add more command line argument options.
 
 ## Result
 We report the evaluation of models trained using Noisy Student Training with 50 epochs each iteration. For the purpose of comparison, we also trained a resnet50 model directly for 200 epochs. Here we report the performance of its best checkpoint with regard to the test loss.
+**Results of Noisy Student Training with soft pseudo labels**
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
 | resnet34 | 50 | 0.223 (soft) | 0.696 | 81.09% |
 | resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
 | resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
+
+**Results of Noisy Student Training with hard pseudo labels**
+| Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
+| -- | -- | -- | -- | -- |
+| resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
+| resnet34 | 50 | 0.223 (soft) | 0.696 | 81.09% |
+| resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
+| resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
+
+**Results of directly training on Food101 as control**
+| Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
+| -- | -- | -- | -- | -- |
 | resnet50 | 200 | 0.281 (direct) | 0.588 | 84.36% |
 
 Note: in the Train loss entries of the table, we marked out where labels used to calculate the training loss come from. Direct means labels are the default one-hot labels provided by the dataset, soft means labels are the soft pseudo labels (probability distribution) produced by the teacher model, and hard means labels are the hard pseudo labels (one-hot prediction) produced by the teacher model.
