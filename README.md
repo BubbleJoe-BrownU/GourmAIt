@@ -16,8 +16,9 @@ In this project, we will use the same training logic to train a light-wieght Con
 
 We decided to train a series of resnet18, resnet34, resnet50, resnet50, which we refer to as model1, model2, model3, and model4, respectively, under the Noisy Student Training framework. The first three models are of increasing model sizes, while model3 and model4 are of same model size, both resnet50. This is one major feature of Noisy Student Training that makes it distinctive from knowledge distillation, where the teacher model is of greater capacity than the student model. Following the orignial paper's practice, we applied RandAugment and Stochastic Depth to student models to increase their robustness. We didn't apply Dropout to our models because Dropout loses effectiveness when combined with BatchNorms in resnet.
 
-<img src="https://drive.google.com/uc?id=1Rq7Ld-qXVziI7w1KkLL7XTeInc7GUkh6" alt="Noisy Student Framework" width="200"/>
-
+<p align="center">
+<img src="https://drive.google.com/uc?id=1Rq7Ld-qXVziI7w1KkLL7XTeInc7GUkh6" alt="Noisy Student Framework" width="400"/>
+</p>
 
 ## Features
 - Mixed Precision Training
