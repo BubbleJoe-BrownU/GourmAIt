@@ -24,7 +24,8 @@ We decided to train a series of resnet18, resnet34, resnet50, resnet50, which we
 - Mixed precision training
 - Weight decaying AdamW with cosine-decaying learning rate schedule
 - Noisy Student Training
-- Toggle between soft and hard pseudo Labels
+- Stochastic Depth
+- Deployment on edge devices
 
 ## Requirements
 - Python <= 3.10 (Python > 3.10 is not yet compatible with PyTorch2.0's compile feature)
