@@ -1,4 +1,5 @@
 *.ipynb
+.ipynb_checkpoints
 __pycache__
 food-101
 *.sh
