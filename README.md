@@ -21,14 +21,15 @@ We decided to train a series of resnet18, resnet34, resnet50, resnet50, which we
 </p>
 
 ## Features
-- Mixed Precision Training
-- AdamW with cosine-decaying learning rate
+- Mixed precision training
+- Weight decaying AdamW with cosine-decaying learning rate schedule
 - Noisy Student Training
-- Soft and Hard Pseudo Labels
+- Toggle between soft and hard pseudo Labels
 
 ## Requirements
 - Python <= 3.10 (Python > 3.10 is not yet compatible with PyTorch2.0's compile feature)
-- PyTorch >= 2.0
+- pytorch >= 2.0
+- pytorch-cuda
 - Torchvision
 
 ## Usage
@@ -37,7 +38,7 @@ Prior to any model operations, download the `food101` dataset by running:
 ```python
 python datasets/prepare_datasets.py
 ```
-Which will create a `food-101` directory inside of the `datasets` directory and download the dataset in about 30 mins. The total size of the dataset is 4.65 gigabytes.
+Which will create a `food-101` directory inside the `datasets` directory and download the dataset in about 20 mins. The total size of the dataset is 4.65 gigabytes.
 
 ### Training model
 To train a model directly on food101 dataset:
@@ -62,4 +63,5 @@ python train_nosiy_student.py \
 --init_from from_pretrained
 ```
 
+## Result
 
