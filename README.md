@@ -69,6 +69,7 @@ The choices of customizable hyperparameters are much more abundant than as shown
 
 ## Result
 We report the evaluation of models trained using Noisy Student Training with 50 epochs each iteration. For the purpose of comparison, we also trained a resnet50 model directly for 200 epochs. Here we report the performance of its best checkpoint with regard to the test loss.
+
 **Results of Noisy Student Training with soft pseudo labels**
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
@@ -81,7 +82,7 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
-| resnet34 | 50 | 0.223 (soft) | 0.696 | 81.09% |
+| resnet34 | 50 | 0.009 (hard) | 0.932 | 81.57% |
 | resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
 | resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
 
