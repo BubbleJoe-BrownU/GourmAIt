@@ -111,6 +111,9 @@ class Bottleneck(nn.Module):
         
         
 class ResNet(nn.Module):
+    """
+    Num_layers is defined as 2 + num_blocks*(2 if BasicBlock else 3)
+    """
     def __init__(self,
                  block: Type[Union[BasicBlock, Bottleneck]],
                  layers: List[int],
