@@ -1,4 +1,4 @@
-# NoisyStudentFood101: GourmAIt
+# GourmAIt: Noisy Student Training on Food101
 
 ## Background
 [Food101](https://data.vision.ee.ethz.ch/cvl/datasets_extra/food-101/) is a image classification dataset published in 2014. It contains 101 food categories, with 101,000 images. For each class 750 trainining images are provided as well as 250 manually reviewed test images. The training images contains certain degrees of noise intendedly, which comes in the form of intense colors and wrong labels.
