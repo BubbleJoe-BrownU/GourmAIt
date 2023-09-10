@@ -83,8 +83,8 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
 | resnet34 | 50 | 0.009 (hard) | 0.932 | 81.57% |
-| resnet50 | 50 | 0.005 (hard) | 0.704 | 86.54% |
-| resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
+| resnet50 | 50 | 0.005 (hard) | 0.510 | 86.27% |
+| resnet50 | 50 | 0.015 (hard) | 0.513 | 86.28% |
 
 **Results of directly training on Food101 as control**
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
