@@ -44,14 +44,14 @@ best_val_loss = float('inf')
 
 
 
-def prepare_training(init_from):
+def prepare_training(init_from, out_dir_list):
     """
     prepare a series of models for the Noisy Student Training
     """
-    model1, optimizer1, epoch_num1, eval_loss1, stepwise_unfreeze1 = prepare_model('resnet18', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model1')
-    model2, optimizer2, epoch_num2, eval_loss2, stepwise_unfreeze2 = prepare_model('resnet34', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model2')
-    model3, optimizer3, epoch_num3, eval_loss3, stepwise_unfreeze3 = prepare_model('resnet50', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model3')
-    model4, optimizer4, epoch_num4, eval_loss4, stepwise_unfreeze4 = prepare_model('resnet50', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir='noisy-student-model4')
+    model1, optimizer1, epoch_num1, eval_loss1, stepwise_unfreeze1 = prepare_model('resnet18', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir=out_dir_list[0])
+    model2, optimizer2, epoch_num2, eval_loss2, stepwise_unfreeze2 = prepare_model('resnet34', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir=out_dir_list[1])
+    model3, optimizer3, epoch_num3, eval_loss3, stepwise_unfreeze3 = prepare_model('resnet50', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir=out_dir_list[2])
+    model4, optimizer4, epoch_num4, eval_loss4, stepwise_unfreeze4 = prepare_model('resnet50', init_from=init_from, stepwise_unfreeze=True, device=device, to_compile=to_compile, weight_decay=weight_decay, learning_rate=learning_rate, out_dir=out_dir_list[3])
     
     models = [model1, model2, model3, model4]
     optimizer_list = [optimizer1, optimizer2, optimizer3, optimizer4]
@@ -78,8 +78,10 @@ def main():
     parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default arguments')
     parser.add_argument('--init-from', default='from_pretrained')
     parser.add_argument('-l', '--learning-rate', default=1e-3)
+    parser.add_argument('--pseudo-label', default='soft')
     args = parser.parse_args()
-
+    
+    pseudo_label = args.pseudo_label
     init_from = args.init_from
     learning_rate = args.learning_rate
 
@@ -92,7 +94,7 @@ def main():
         os.makedirs(out_dir, exist_ok=True)
     batch_size_list = [384, 384, 384, 384]
     epoch_list = [50, 50, 50, 50]
-    models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list = prepare_training(init_from)
+    models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list = prepare_training(init_from, out_dir_list)
     
     for i, model in enumerate(models):
         model = models[i]
@@ -137,7 +139,7 @@ def main():
                 device=device, 
                 wandb_log = wandb_log, 
                 teacher=models[i-1], 
-                pseudo_label='soft')
+                pseudo_label=pseudo_label)
 
             models[i] = load_model(model_name_list[i], device, to_compile, out_dir)            
             
