@@ -145,6 +145,8 @@ def get_batch(split, batch_size, device, dataset_dir, model=None, pseudo_label=N
 def load_model(model_name, device, to_compile, out_dir):
     """
     Load a model from a directory. User should ensure the model type is compatible with the checkpoint saved in out_dir
+    This method is to be called when one wants to use the checkpointed model for inference, e.g. to generate pseudo labels.
+    If you want to resume training a model, use prepare_model instead, where epoch_num, optimizer state and stepwise unfreezing state will be resumed.
     """
     model_name = model_name.lower()
     assert model_name in {'resnet18', 'resnet34', 'resnet50'}
@@ -297,6 +299,8 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
     #         loss.backward()
     #         optimizer.step()
             optimizer.zero_grad(set_to_none=True)
+            if len(losses) == 5:
+                break
         train_loss = np.round(sum(losses)/len(losses), 3)
         print(f"epoch {epoch_num}, average training loss: {train_loss}")
         
@@ -312,12 +316,14 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                 prediction = torch.argmax(logits, dim=-1)
                 num_correct += (prediction == y).sum().item()
             losses.append(loss.item())
+            if len(losses) == 5:
+                break
         val_loss = np.round(sum(losses)/len(losses), 3)
         val_acc = np.round(num_correct*100 / total_pred, 2)
         print(f"             , average validation loss: {val_loss}, accuracy: {val_acc}%")
 
         # log info to wandb
-        if wandb_log:
+        if wandb_log and False:
             wandb.log(
                 {
                     'epoch': epoch_num,
@@ -327,7 +333,7 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                     'lr': lr
                 }
             )
-        if val_loss < best_val_loss:
+        if val_loss < best_val_loss and False:
             best_val_loss = val_loss
             if epoch_num > 0:
                 checkpoint = {

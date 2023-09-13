@@ -75,10 +75,16 @@ def main():
     (4)
     We use the student as the new teacher model and continue to step 2.
     """
-    parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default arguments')
-    parser.add_argument('--init-from', default='from_pretrained')
-    parser.add_argument('-l', '--learning-rate', default=1e-3)
-    parser.add_argument('--pseudo-label', default='soft')
+    parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default settings like learning rate or pseudo label type.')
+    parser.add_argument('--init-from', type=str, default='from_pretrained', help="initialize the model from scratch, from_pretrained, or resume training")
+    parser.add_argument('--learning-rate', type=float, default=1e-3, help="the (default) highest learning rate used in training")
+    parser.add_argument('--lr-decay', type=bool, default=True, help="whether to use the cosine weight decay learning rate scheduler with warmup")
+    parser.add_argument('--weight-decay', type=float, default=1e-1, help="the weight decaying coefficient used in training")
+    parser.add_argument('--stepwise-unfreeze', type=bool, default=True, help="whether to unfreeze a resnet gradually as training goes on")
+    
+    parser.add_argument('--pseudo-label', type=str, default='soft', help="whether to use soft pseudo label or hard pseudo label")
+    
+
     args = parser.parse_args()
     
     pseudo_label = args.pseudo_label
