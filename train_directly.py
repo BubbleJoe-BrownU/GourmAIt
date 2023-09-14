@@ -10,21 +10,13 @@ from train_utils import prepare_model, train
 # you can replace these global variables with argparse arguments
 
 
-wandb_log = False
+wandb_log = True
 wandb_project = 'noisy-student'
 wandb_name = 'train-resnet50-directly'
-
-# default config
-out_dir = 'train-resnet50-directly-for-120-epochs'
-
-
-init_from = 'from_pretrained'
-weight_decay = 1e-1
 
 
 to_compile = True
 
-batch_size = 128
 torch.manual_seed(42)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn

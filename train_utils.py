@@ -304,8 +304,6 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
     #         loss.backward()
     #         optimizer.step()
             optimizer.zero_grad(set_to_none=True)
-            if len(losses) == 5:
-                break
         train_loss = np.round(sum(losses)/len(losses), 3)
         print(f"epoch {epoch_num}, average training loss: {train_loss}")
         
@@ -321,14 +319,12 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                 prediction = torch.argmax(logits, dim=-1)
                 num_correct += (prediction == y).sum().item()
             losses.append(loss.item())
-            if len(losses) == 5:
-                break
         val_loss = np.round(sum(losses)/len(losses), 3)
         val_acc = np.round(num_correct*100 / total_pred, 2)
         print(f"      , average validation loss: {val_loss}, accuracy: {val_acc}%")
 
         # log info to wandb
-        if wandb_log and False:
+        if wandb_log:
             wandb.log(
                 {
                     'epoch': epoch_num,
@@ -338,7 +334,7 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                     'lr': lr
                 }
             )
-        if val_loss < best_val_loss and epoch_num % 10 == 0:
+        if val_loss < best_val_loss:
             best_val_loss = val_loss
             if epoch_num > 0:
                 checkpoint = {
