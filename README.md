@@ -8,6 +8,7 @@ Noisy Student is a self-supervised training technique released by google researc
   2. Produce pseudu labels or hard labels on a larger unlabeled dataset
   3. Train a larger student classifier on the combination of labeled dataset and unlabeled dataset, adding noise to the student model
   4. Go to step 2, using student as the teacher
+
 For more details please refer to [google research's repo](https://github.com/google-research/noisystudent) and the [Noisy Student](https://arxiv.org/abs/1911.04252) article.
 
 ## Overview
