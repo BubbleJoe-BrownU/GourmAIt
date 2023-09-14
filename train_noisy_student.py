@@ -25,7 +25,6 @@ ptdtype = {
 }[dtype]
 to_compile = True
 
-batch_size = 128
 torch.manual_seed(42)
 torch.backends.cuda.matmul.allow_tf32 = True # allow tf32 on matmul
 torch.backends.cuda.allow_tf32 = True # allow tf32 on cudnn
@@ -38,9 +37,6 @@ lr_decay_iters = 50
 learning_rate = 1e-3
 min_lr = 1e-5
 
-max_epochs = 100
-epoch_num = 0
-best_val_loss = float('inf')
 
 
 
@@ -77,19 +73,23 @@ def main():
     """
     parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default settings like learning rate or pseudo label type.')
     parser.add_argument('--init-from', type=str, default='from_pretrained', help="initialize the model from scratch, from_pretrained, or resume training")
-    parser.add_argument('--learning-rate', type=float, default=1e-3, help="the (default) highest learning rate used in training")
-    parser.add_argument('--lr-decay', type=bool, default=True, help="whether to use the cosine weight decay learning rate scheduler with warmup")
+    parser.add_argument('--learning-rate', type=float, default=1e-4, help="the (default) highest learning rate used in training")
+    parser.add_argument('--decay_lr', type=bool, default=True, help="whether to use the cosine weight decay learning rate scheduler with warmup")
     parser.add_argument('--weight-decay', type=float, default=1e-1, help="the weight decaying coefficient used in training")
     parser.add_argument('--stepwise-unfreeze', type=bool, default=True, help="whether to unfreeze a resnet gradually as training goes on")
-    
+    parser.add_argument('--min-lr', type=float, default=1e-5, help="the minimum learning rate used in training if learning decay is enabled")
     parser.add_argument('--pseudo-label', type=str, default='soft', help="whether to use soft pseudo label or hard pseudo label")
     
 
     args = parser.parse_args()
     
+    decay_lr = args.decay_lr
     pseudo_label = args.pseudo_label
+    weight_decay = args.weight_decay
     init_from = args.init_from
     learning_rate = args.learning_rate
+    min_lr = args.min_lr
+    stepwise_unfreeze = args.stepwise_unfreeze
 
     if wandb_log:
         wandb.init(project=wandb_project, name=wandb_name)

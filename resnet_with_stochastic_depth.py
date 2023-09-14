@@ -86,7 +86,7 @@ class Bottleneck(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.conv2 = conv3x3(width, width, stride, groups, dilation)
         self.bn2 = nn.BatchNorm2d(width)
-        self.conv3 = conv1x1(width, planes * self.expansion)
+        self.conv3 = conv1x1(width, planes*self.expansion)
         self.bn3 = nn.BatchNorm2d(planes*self.expansion)
         self.downsample = downsample
         self.stride = stride
@@ -94,11 +94,12 @@ class Bottleneck(nn.Module):
         self.stochastic_depth = StochasticDepth(0.2)
         
     def forward(self, x: Tensor) -> Tensor:
+
         identity = x
         
         out = self.relu(self.bn1(self.conv1(x)))
-        out = self.relu(self.bn2(self.conv2(x)))
-        out = self.bn3(self.conv3(x))
+        out = self.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
         # stochastic depth 
         out = self.stochastic_depth(out)
         
@@ -226,7 +227,7 @@ def resnet50(weights=None, num_classes=1000):
     """
     Replace each basic block in resnet34 with bottleneck block
     """
-    net = ResNet(block=Bottleneck, layers=[2, 4, 6, 3], num_classes=num_classes)
+    net = ResNet(block=Bottleneck, layers=[3, 4, 6, 3], num_classes=num_classes)
     if weights is not None:
         state_dict = weights.get_state_dict(progress=True)
         # discard prediction head's state dict

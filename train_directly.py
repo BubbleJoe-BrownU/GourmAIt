@@ -40,6 +40,9 @@ min_lr = 1e-5
 
 
 def main():
+    """
+    Directly train a resnet model with stochastic depth on the Food101 dataset. This achieves pretty good accuracy, though not as good as resnet trained using Noisy Student Training.
+    """
     # to overwrite some default settings
     # add more as you would like
     parser = argparse.ArgumentParser(description='maybe you would like to overwrite some default arguments')
@@ -52,6 +55,7 @@ def main():
     parser.add_argument('--max-epochs', type=int, default=150, help="the maximum number of epochs")
     parser.add_argument('--learning-rate', type=float, default=1e-4, help="the (default) highest learning rate used in training")
     parser.add_argument('--min-lr', type=float, default=1e-5, help="the minimum learning rate used in training if learning decay is enabled")
+    parser.add_argument('--batch-size', type=int, default=128, help="number of data examples in a mini batch")
     
     args = parser.parse_args()
 
@@ -64,6 +68,7 @@ def main():
     stepwise_unfreeze = args.stepwise_unfreeze
     max_epochs = args.max_epochs
     learning_rate = args.learning_rate
+    batch_size = args.batch_size
     
     os.makedirs(out_dir, exist_ok=True)
 

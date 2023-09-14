@@ -325,7 +325,7 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                 break
         val_loss = np.round(sum(losses)/len(losses), 3)
         val_acc = np.round(num_correct*100 / total_pred, 2)
-        print(f"             , average validation loss: {val_loss}, accuracy: {val_acc}%")
+        print(f"      , average validation loss: {val_loss}, accuracy: {val_acc}%")
 
         # log info to wandb
         if wandb_log and False:
