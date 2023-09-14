@@ -8,7 +8,9 @@ from tqdm import tqdm
 import inspect
 from torchvision import transforms
 from torchvision.datasets import Food101
-from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
+from resnet_with_stochastic_depth import resnet18, resnet34, resnet50
+# from torchvision.models.resnet import resnet18, resnet34, resnet50, ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
+from torchvision.models.resnet import ResNet18_Weights, ResNet34_Weights, ResNet50_Weights
 import wandb
 from randaug import RandAugment
 
@@ -25,6 +27,8 @@ def unfreeze_model_stepwise(model, epoch_num, interval=10):
     As the training proceeds, layers are unfreezed gradually, with latter layers unfreezed earlier. 
     The speed of unfreezing layers is controlled by the interval parameter, which is set to 10 epochs by default
     """
+    if epoch_num // interval != 0:
+        return
     if epoch_num // interval == 0:
         for pn, p in model.named_parameters():
             if pn.startswith('fc'):
@@ -197,8 +201,8 @@ def prepare_model(model_name, init_from, stepwise_unfreeze, device, to_compile, 
         stepwise_unfreeze = False
         model = model_class(num_classes=101)
     elif init_from == 'from_pretrained':
-        print(f"Initializing {model_name} with pretrained checkpoint")
-        model = model_class(weights= model_weights)
+        print(f"Initializing {model_name} with model checkpoint pretrained on ImageNet1K")
+        model = model_class(weights = model_weights)
         model.fc = nn.Linear(in_features=out_channels, out_features=101, bias=True)
         # freeze all layers except the prediction head
         # cannot freeze all here, otherwise no grad is needed and backward would error out
@@ -247,7 +251,8 @@ def prepare_model(model_name, init_from, stepwise_unfreeze, device, to_compile, 
     return model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze
 
 
-
+# we try to keep the structure of training function the same for both supervised training (ST) and noisy student training (NST)
+# the only difference is for NST, we provide two extra arguments, teacher and pseudo_label, to the train function
 def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epochs, warmup_iters, lr_decay_iters, decay_lr, learning_rate, min_lr, out_dir, batch_size, device, wandb_log, teacher=None, pseudo_label=None):
     """
     I know the number of parameters passed here are outrageously enormous, but I have little to do with it.
@@ -271,8 +276,8 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
 
     while True:
         
-        if epoch_num % 10 == 0 and stepwise_unfreeze:
-            unfreeze_model_stepwise(model, epoch_num)
+        
+        unfreeze_model_stepwise(model, epoch_num)
         
         # apply learning rate scheduler
         # pass the epoch_num + 1, s.t. epoch_num ranges from 1 to max_epochs
@@ -333,7 +338,7 @@ def train(model, optimizer, epoch_num, best_val_loss, stepwise_unfreeze, max_epo
                     'lr': lr
                 }
             )
-        if val_loss < best_val_loss and False:
+        if val_loss < best_val_loss and epoch_num % 10 == 0:
             best_val_loss = val_loss
             if epoch_num > 0:
                 checkpoint = {

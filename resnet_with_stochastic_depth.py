@@ -117,7 +117,7 @@ class ResNet(nn.Module):
     def __init__(self,
                  block: Type[Union[BasicBlock, Bottleneck]],
                  layers: List[int],
-                 num_classes: int = 101,
+                 num_classes: int = 1000,
                  zero_init_residual: bool = False,
                  groups: int = 1,
                  width_per_group: int = 64,
@@ -192,32 +192,74 @@ class ResNet(nn.Module):
         x = self.layer4(x)
 
         x = self.avgpool(x)
+        x = torch.flatten(x, 1)
         x = self.fc(x)
         return x
     
-def resnet18():
-    return ResNet(block=BasicBlock, 
-                  layers=[2, 2, 2, 2])
+def resnet18(weights=None, num_classes=1000):
+    net = ResNet(block=BasicBlock, layers=[2, 2, 2, 2], num_classes=num_classes)
+    if weights is not None:
+        state_dict = weights.get_state_dict(progress=True)
+        # discard prediction head's state dict and in this case the strict argument of load_state_dict should be set to True
+        if num_classes != 1000:
+            for k in list(state_dict.keys()):
+                if k.startswith("fc"):
+                    _ = state_dict.pop(k)
+        net.load_state_dict(state_dict, strict=False)
+    return net
+        
+    
 
-def resnet34():
-    return ResNet(block=BasicBlock, 
-                  layers=[2, 4, 6, 3])
+def resnet34(weights=None, num_classes=1000):
+    net = ResNet(block=BasicBlock, layers=[3, 4, 6, 3], num_classes=num_classes)
+    if weights is not None:
+        state_dict = weights.get_state_dict(progress=True)
+        # discard prediction head's state dict
+        if num_classes != 1000:
+            for k in list(state_dict.keys()):
+                if k.startswith("fc"):
+                    _ = state_dict.pop(k)
+        net.load_state_dict(state_dict, strict=False)
+    return net
 
-def resnet50():
+def resnet50(weights=None, num_classes=1000):
     """
     Replace each basic block in resnet34 with bottleneck block
     """
-    return ResNet(block=Bottleneck, 
-                 layers=[2, 4, 6, 3])
+    net = ResNet(block=Bottleneck, layers=[2, 4, 6, 3], num_classes=num_classes)
+    if weights is not None:
+        state_dict = weights.get_state_dict(progress=True)
+        # discard prediction head's state dict
+        if num_classes != 1000:
+            for k in list(state_dict.keys()):
+                if k.startswith("fc"):
+                    _ = state_dict.pop(k)
+        net.load_state_dict(state_dict, strict=False)
+    return net
 
-def resnet101():
-    return ResNet(block=Bottleneck, 
-                  layers=[3, 4, 23, 3])
+def resnet101(weights=None, num_classes=1000):
+    net = ResNet(block=Bottleneck, layers=[3, 4, 23, 3], num_classes=num_classes)
+    if weights is not None:
+        state_dict = weights.get_state_dict(progress=True)
+        # discard prediction head's state dict
+        if num_classes != 1000:
+            for k in list(state_dict.keys()):
+                if k.startswith("fc"):
+                    _ = state_dict.pop(k)
+        net.load_state_dict(state_dict, strict=False)
+    return net
 
-def resnet152():
-    return ResNet(block=Bottleneck, 
-                 layers=[3, 8, 36, 3])
-        
+def resnet152(weights=None, num_classes=1000):
+    net = ResNet(block=Bottleneck, layers=[3, 8, 36, 3], num_classes=num_classes)
+    if weights is not None:
+        state_dict = weights.get_state_dict(progress=True)
+        # discard prediction head's state dict
+        if num_classes != 1000:
+            for k in list(state_dict.keys()):
+                if k.startswith("fc"):
+                    _ = state_dict.pop(k)
+        net.load_state_dict(state_dict, strict=False)
+    return net
         
         
         
