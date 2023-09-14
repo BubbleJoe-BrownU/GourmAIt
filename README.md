@@ -23,9 +23,9 @@ We decided to train a series of resnet18, resnet34, resnet50, resnet50, which we
 ## Features
 - Mixed precision training
 - Weight decaying AdamW with cosine-decaying learning rate schedule
-- Noisy Student Training
-- Stochastic Depth
-- Deployment on edge devices
+- Implemented Noisy Student Training as well as direct training framework
+- Adopted ResNet architecture to exhibit stochstic depth during training and unfreeze block stepwise during training
+- Deployed result model on edge devices (in progress)
 
 ## Requirements
 - Python <= 3.10 (Python > 3.10 is not yet compatible with PyTorch2.0's compile feature)
