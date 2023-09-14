@@ -1,0 +1,5 @@
+python==3.10.0
+numpy==1.25.2
+pytorch==2.0.0
+torchvision==0.15.2
+
