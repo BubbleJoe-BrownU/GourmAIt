@@ -87,10 +87,10 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | resnet50 | 50 | 0.005 (hard) | 0.510 | 86.27% |
 | resnet50 | 50 | 0.015 (hard) | 0.513 | 86.28% |
 
-**Results of directly training on Food101 as control**
+**Results of directly training on Food101 as control** [training report](https://api.wandb.ai/links/brownu_ai/fg42itt2)
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
-| resnet50 | 200 | 0.281 (direct) | 0.588 | 84.36% |
+| resnet50 | 150 | 0.457 (direct) | 0.488 | 86.59% |
 
 Note: in the Train loss entries of the table, we marked out where labels used to calculate the training loss come from. Direct means labels are the default one-hot labels provided by the dataset, soft means labels are the soft pseudo labels (probability distribution) produced by the teacher model, and hard means labels are the hard pseudo labels (one-hot prediction) produced by the teacher model.
 
