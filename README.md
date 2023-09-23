@@ -79,7 +79,7 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
 | resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
 
-**Results of Noisy Student Training with hard pseudo labels**
+**Results of Noisy Student Training with hard pseudo labels w//o stochastic depth**
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
@@ -87,7 +87,7 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | resnet50 | 50 | 0.005 (hard) | 0.510 | 86.27% |
 | resnet50 | 50 | 0.015 (hard) | 0.513 | 86.28% |
 
-**Results of directly training on Food101 as control** [training report](https://api.wandb.ai/links/brownu_ai/fg42itt2)
+**Results of directly training on Food101 w// stochastic depth** [training report](https://api.wandb.ai/links/brownu_ai/fg42itt2)
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet50 | 150 | 0.457 (direct) | 0.488 | 86.59% |
