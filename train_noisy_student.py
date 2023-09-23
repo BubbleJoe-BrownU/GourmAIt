@@ -40,7 +40,7 @@ min_lr = 1e-5
 
 
 
-def prepare_training(init_from, out_dir_list):
+def prepare_training(init_from, stepwise_unfreeze, device, to_compile, weight_decay, learning_rate, out_dir_list):
     """
     prepare a series of models for the Noisy Student Training
     """
@@ -100,7 +100,7 @@ def main():
         os.makedirs(out_dir, exist_ok=True)
     batch_size_list = [384, 384, 384, 384]
     epoch_list = [50, 50, 50, 50]
-    models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list = prepare_training(init_from, out_dir_list)
+    models, optimizer_list, epoch_num_list, eval_loss_list, stepwise_unfreeze_list = prepare_training(init_from, stepwise_unfreeze, device, to_compile, weight_decay, learning_rate, out_dir_list)
     
     for i, model in enumerate(models):
         model = models[i]
@@ -129,6 +129,9 @@ def main():
                 wandb_log=wandb_log)
             models[i] = load_model(model_name_list[i], device, to_compile, out_dir)            
         elif i > 0:
+            if i >= 2:
+                # save some memory by removing unused models
+                models[i-2] = None
             train(model=model, 
                 optimizer=optimizer, 
                 epoch_num=epoch_num, 
@@ -146,7 +149,6 @@ def main():
                 wandb_log = wandb_log, 
                 teacher=models[i-1], 
                 pseudo_label=pseudo_label)
-
             models[i] = load_model(model_name_list[i], device, to_compile, out_dir)            
             
 if __name__ == '__main__':
