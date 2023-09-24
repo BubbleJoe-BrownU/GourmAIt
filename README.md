@@ -71,7 +71,7 @@ The choices of customizable hyperparameters are much more abundant than as shown
 ## Result
 We report the evaluation of models trained using Noisy Student Training with 50 epochs each iteration. The whole training process took about 80 hours on a Titan RTX GPU. For the purpose of comparison, we also trained a resnet50 model directly for 200 epochs. Here we report the performance of its best checkpoint with regard to the test loss.
 
-**Results of Noisy Student Training with soft pseudo labels**
+**Results of Noisy Student Training with soft pseudo labels w/o stochstic depth**
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
@@ -79,7 +79,7 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
 | resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
 
-**Results of Noisy Student Training with hard pseudo labels w//o stochastic depth**
+**Results of Noisy Student Training with hard pseudo labels w/o stochastic depth**
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 0.023 (direct) | 1.096 | 78.18% |
@@ -87,7 +87,15 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | resnet50 | 50 | 0.005 (hard) | 0.510 | 86.27% |
 | resnet50 | 50 | 0.015 (hard) | 0.513 | 86.28% |
 
-**Results of directly training on Food101 w// stochastic depth** [training report](https://api.wandb.ai/links/brownu_ai/fg42itt2)
+**Results of Noisy Student Training with soft pseudo labels w/ stochstic depth**
+| Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
+| -- | -- | -- | -- | -- |
+| resnet18 | 50 | 1.27 (direct) | 0.711 | 80.35% |
+| resnet34 | 50 | 0.223 (soft) | 0.696 | 81.09% |
+| resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
+| resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
+
+**Results of directly training on Food101 w/ stochastic depth** [training report](https://api.wandb.ai/links/brownu_ai/fg42itt2)
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet50 | 150 | 0.457 (direct) | 0.488 | 86.59% |
