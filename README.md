@@ -91,7 +91,7 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 1.27 (direct) | 0.711 | 80.35% |
-| resnet34 | 50 | 0.223 (soft) | 0.696 | 81.09% |
+| resnet34 | 50 | 0.755 (soft) | 0.580 | 83.75% |
 | resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
 | resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
 
