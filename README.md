@@ -92,7 +92,7 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | -- | -- | -- | -- | -- |
 | resnet18 | 50 | 1.27 (direct) | 0.711 | 80.35% |
 | resnet34 | 50 | 0.755 (soft) | 0.580 | 83.75% |
-| resnet50 | 50 | 0.182 (soft) | 0.514 | 85.83% |
+| resnet50 | 50 | 0.59 (soft) | 0.461 | 87.07% |
 | resnet50 | 50 | 0.159 (soft) | 0.523 | 85.84% |
 
 **Results of directly training on Food101 w/ stochastic depth** [training report](https://api.wandb.ai/links/brownu_ai/fg42itt2)
