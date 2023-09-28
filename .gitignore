@@ -12,3 +12,4 @@ libtorch
 CMakeLists.txt
 *.pt
 wandb
+.DS_Store
