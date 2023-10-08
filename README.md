@@ -106,6 +106,11 @@ We report the evaluation of models trained using Noisy Student Training with 50 
 | -- | -- | -- | -- | -- |
 | resnet50 | 150 | 0.457 (direct) | 0.488 | 86.59% |
 
+**Results of directly training on Food101 w/o stochastic depth** [training report](https://api.wandb.ai/links/brownu_ai/ql531iek)
+| Model Name | Training Epochs | Train Loss | Test Loss | Test Acc |
+| -- | -- | -- | -- | -- |
+| resnet50 | 150 | 0.397 (direct) | 0.573 | 83.89% |
+
 Note: in the Train loss entries of the table, we marked out where labels used to calculate the training loss come from. Direct means labels are the default one-hot labels provided by the dataset, soft means labels are the soft pseudo labels (probability distribution) produced by the teacher model, and hard means labels are the hard pseudo labels (one-hot prediction) produced by the teacher model.
 
 From the result of Noisy Student Training with standard resnets, both with soft pseudo label or hard pseudo label, we can see that in the first three iterations, model's performance increases as model's capacity (depth or number of parameters) increases. And during the training, there is **still an slight increasing trend** for resnet34 and resnet50 near epoch 50. It's recommended to **increase the maximum epochs to further gain an improvement of model performance**. And we also noticed that an extra iteration of training for resnet50 (the fourth row) does not gain significant increase of accuracy. That's probably because the two model are of the same capacity or the number of training epochs are not large enough. Because of the ineffectiveness of the last iteration, we decided to use the resnet 50 trained in the third iteration for later use and for comparison with the resnet50 directly trained.  
